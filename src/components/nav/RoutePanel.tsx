@@ -31,6 +31,7 @@ export function RoutePanel() {
     favorites,
     toggleFavorite,
     crowdFor,
+    formatLength,
     error,
   } = useNavigator();
 
@@ -66,9 +67,15 @@ export function RoutePanel() {
           aria-label={fav ? "Remove from favorites" : "Add to favorites"}
           onClick={() => toggleFavorite(destination.id)}
         >
-          <Star className={`h-4.5 w-4.5 ${fav ? "fill-warning text-warning" : "text-muted-foreground"}`} />
+          <Star
+            className={`h-4.5 w-4.5 ${fav ? "fill-warning text-warning" : "text-muted-foreground"}`}
+          />
         </button>
-        <button type="button" aria-label="Clear destination" onClick={() => selectDestination(null)}>
+        <button
+          type="button"
+          aria-label="Clear destination"
+          onClick={() => selectDestination(null)}
+        >
           <X className="h-4.5 w-4.5 text-muted-foreground" />
         </button>
       </div>
@@ -83,7 +90,7 @@ export function RoutePanel() {
       {route && (
         <>
           <div className="grid grid-cols-3 gap-2">
-            <Stat icon={Footprints} label="Distance" value={`${route.distance} m`} />
+            <Stat icon={Footprints} label="Distance" value={formatLength(route.distance)} />
             <Stat icon={Clock} label="ETA" value={`${route.minutes} min`} />
             <Stat
               icon={Layers}
@@ -93,7 +100,9 @@ export function RoutePanel() {
           </div>
 
           <div className="rounded-2xl border border-border bg-secondary/30 p-3">
-            <p className="mb-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Route</p>
+            <p className="mb-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              Route
+            </p>
             <div className="flex flex-wrap items-center gap-1 text-[11px]">
               {route.summary.map((s, i) => (
                 <span key={`${s}-${i}`} className="flex items-center gap-1">
@@ -108,7 +117,8 @@ export function RoutePanel() {
 
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline" className={crowdTone(crowd.level)}>
-              <Users className="mr-1 h-3 w-3" aria-hidden /> {crowd.level} crowd · {crowd.occupancy}%
+              <Users className="mr-1 h-3 w-3" aria-hidden /> {crowd.level} crowd · {crowd.occupancy}
+              %
             </Badge>
             {route.usesElevator && (
               <Badge variant="outline" className="border-success/40 text-success">
@@ -171,7 +181,7 @@ export function RoutePanel() {
                     {routeModes.find((r) => r.id === alt.mode)?.label}
                   </span>
                   <span className="text-muted-foreground">
-                    {alt.minutes} min · {alt.distance} m
+                    {alt.minutes} min · {formatLength(alt.distance)}
                   </span>
                 </button>
               ))}
@@ -183,15 +193,7 @@ export function RoutePanel() {
   );
 }
 
-function Stat({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof Clock;
-  label: string;
-  value: string;
-}) {
+function Stat({ icon: Icon, label, value }: { icon: typeof Clock; label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-border bg-secondary/30 p-3">
       <Icon className="mb-1 h-3.5 w-3.5 text-primary" aria-hidden />

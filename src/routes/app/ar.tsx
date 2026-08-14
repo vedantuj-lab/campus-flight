@@ -8,9 +8,16 @@ export const Route = createFileRoute("/app/ar")({
   head: () => ({
     meta: [
       { title: "AR Navigation (Beta) — Campus3D Navigator" },
-      { name: "description", content: "Camera-based AR navigation overlay with direction arrows, distance and landmarks." },
+      {
+        name: "description",
+        content:
+          "Camera-based AR navigation overlay with direction arrows, distance and landmarks.",
+      },
       { property: "og:title", content: "AR Navigation — Campus3D Navigator" },
-      { property: "og:description", content: "Point your camera and follow the arrows to your class." },
+      {
+        property: "og:description",
+        content: "Point your camera and follow the arrows to your class.",
+      },
     ],
   }),
   component: ARPage,
@@ -25,7 +32,9 @@ function ARPage() {
     let stream: MediaStream | null = null;
     (async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+        });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play();
@@ -49,7 +58,9 @@ function ARPage() {
             <div className="glass max-w-sm rounded-3xl p-6 text-center">
               <Camera className="mx-auto mb-2 h-6 w-6 text-primary" aria-hidden />
               <p className="text-sm font-medium">
-                {status === "denied" ? "Camera unavailable — running AR simulation" : "Requesting camera…"}
+                {status === "denied"
+                  ? "Camera unavailable — running AR simulation"
+                  : "Requesting camera…"}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 The overlay below mirrors the live 3D route data.
@@ -64,7 +75,10 @@ function ARPage() {
       </span>
 
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-4">
-        <ArrowUp className="h-24 w-24 animate-float text-primary drop-shadow-[0_0_25px_var(--glow)]" aria-hidden />
+        <ArrowUp
+          className="h-24 w-24 animate-float text-primary drop-shadow-[0_0_25px_var(--glow)]"
+          aria-hidden
+        />
         <div className="glass-strong rounded-2xl px-5 py-3 text-center">
           <p className="text-lg font-semibold">{destination?.name ?? "B204"}</p>
           <p className="text-xs text-muted-foreground">{remaining} m · Turn left in 30 m</p>

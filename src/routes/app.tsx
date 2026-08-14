@@ -16,7 +16,8 @@ export const Route = createFileRoute("/app")({
       { property: "og:title", content: "Campus3D Navigator Dashboard" },
       {
         property: "og:description",
-        content: "Interactive 3D campus navigation with live GPS, accessible routing and crowd intelligence.",
+        content:
+          "Interactive 3D campus navigation with live GPS, accessible routing and crowd intelligence.",
       },
     ],
   }),

@@ -60,7 +60,8 @@ export function findPath(startId: string, goalId: string, mode: RouteMode): Camp
   if (!start || !goal) return null;
   if (startId === goalId) return [start];
 
-  const h = (n: CampusNode) => Math.hypot(n.x - goal.x, n.z - goal.z) + Math.abs(n.floor - goal.floor) * 12;
+  const h = (n: CampusNode) =>
+    Math.hypot(n.x - goal.x, n.z - goal.z) + Math.abs(n.floor - goal.floor) * 12;
 
   const open = new Set<string>([startId]);
   const g = new Map<string, number>([[startId, 0]]);

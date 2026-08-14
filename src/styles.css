@@ -126,6 +126,44 @@
   --foreground: oklch(0.97 0.01 250);
 }
 
+/* Daylight theme — applied by the profile theme setting. */
+.light {
+  --background: oklch(0.97 0.01 250);
+  --foreground: oklch(0.22 0.04 265);
+  --card: oklch(1 0 0 / 78%);
+  --card-foreground: oklch(0.22 0.04 265);
+  --popover: oklch(0.99 0.005 250);
+  --popover-foreground: oklch(0.22 0.04 265);
+  --primary: oklch(0.58 0.16 240);
+  --primary-foreground: oklch(0.99 0.005 250);
+  --secondary: oklch(0.92 0.02 250);
+  --secondary-foreground: oklch(0.24 0.04 265);
+  --muted: oklch(0.93 0.015 250);
+  --muted-foreground: oklch(0.48 0.03 258);
+  --accent: oklch(0.58 0.18 295);
+  --accent-foreground: oklch(0.99 0.005 250);
+  --border: oklch(0.45 0.05 250 / 22%);
+  --input: oklch(0.45 0.05 250 / 26%);
+  --sidebar: oklch(1 0 0 / 82%);
+  --sidebar-foreground: oklch(0.24 0.04 265);
+  --sidebar-accent: oklch(0.93 0.02 250);
+  --sidebar-accent-foreground: oklch(0.24 0.04 265);
+  --sidebar-border: oklch(0.45 0.05 250 / 18%);
+  --surface: oklch(1 0 0 / 72%);
+  --surface-strong: oklch(1 0 0 / 92%);
+  --shadow-panel: 0 24px 70px -34px oklch(0.4 0.05 260 / 45%);
+  --gradient-hero: radial-gradient(1200px 600px at 20% -10%, oklch(0.78 0.1 265 / 45%), transparent 60%),
+    radial-gradient(900px 500px at 90% 10%, oklch(0.82 0.09 205 / 45%), transparent 60%);
+}
+
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+
 @layer base {
   * {
     border-color: var(--color-border);

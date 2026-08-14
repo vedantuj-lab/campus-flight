@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
 export function NavigationCard() {
-  const { navState, route, currentStep, progress, stopNavigation, destination } = useNavigator();
+  const { navState, route, currentStep, progress, stopNavigation, destination, formatLength } =
+    useNavigator();
   if ((navState !== "NAVIGATING" && navState !== "ARRIVED") || !route) return null;
   const step = route.steps[Math.min(currentStep, route.steps.length - 1)]!;
   const arrived = navState === "ARRIVED";
@@ -26,7 +27,9 @@ export function NavigationCard() {
       <div className="flex items-center gap-3">
         <span
           className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
-            arrived ? "bg-success/20 text-success" : "bg-[image:var(--gradient-accent)] text-primary-foreground"
+            arrived
+              ? "bg-success/20 text-success"
+              : "bg-[image:var(--gradient-accent)] text-primary-foreground"
           }`}
         >
           <Icon className="h-6 w-6" aria-hidden />
@@ -38,7 +41,7 @@ export function NavigationCard() {
           <p className="text-[11px] text-muted-foreground">
             {arrived
               ? "🎉 Arrival confirmed · crowd low · accessible exit nearby"
-              : `${remaining} m remaining · Floor ${route.steps[Math.min(currentStep, route.steps.length - 1)]!.floor === 0 ? "G" : step.floor}`}
+              : `${formatLength(remaining)} remaining · Floor ${route.steps[Math.min(currentStep, route.steps.length - 1)]!.floor === 0 ? "G" : step.floor}`}
           </p>
         </div>
         <Button variant="outline" size="sm" className="gap-1.5" onClick={stopNavigation}>

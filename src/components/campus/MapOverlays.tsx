@@ -21,7 +21,11 @@ const floors = [0, 1, 2, 3];
 export function FloorSelector() {
   const { activeFloor, setActiveFloor } = useNavigator();
   return (
-    <div className="glass absolute left-4 top-4 z-10 flex flex-col gap-1 rounded-2xl p-1.5" role="group" aria-label="Floor selector">
+    <div
+      className="glass absolute left-4 top-4 z-10 flex flex-col gap-1 rounded-2xl p-1.5"
+      role="group"
+      aria-label="Floor selector"
+    >
       <span className="px-2 pb-1 pt-1 text-[9px] uppercase tracking-widest text-muted-foreground">
         <Layers className="mb-0.5 mr-1 inline h-3 w-3" aria-hidden />
         Floor
@@ -51,22 +55,52 @@ export function MapControls() {
     "flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground";
   return (
     <div className="glass absolute right-4 top-4 z-10 flex flex-col gap-1 rounded-2xl p-1.5">
-      <button type="button" className={btn} aria-label="Zoom in" onClick={() => sendCamera("zoom", 1)}>
+      <button
+        type="button"
+        className={btn}
+        aria-label="Zoom in"
+        onClick={() => sendCamera("zoom", 1)}
+      >
         <Plus className="h-4 w-4" aria-hidden />
       </button>
-      <button type="button" className={btn} aria-label="Zoom out" onClick={() => sendCamera("zoom", -1)}>
+      <button
+        type="button"
+        className={btn}
+        aria-label="Zoom out"
+        onClick={() => sendCamera("zoom", -1)}
+      >
         <Minus className="h-4 w-4" aria-hidden />
       </button>
-      <button type="button" className={btn} aria-label="Center on my position" onClick={() => sendCamera("gps")}>
+      <button
+        type="button"
+        className={btn}
+        aria-label="Center on my position"
+        onClick={() => sendCamera("gps")}
+      >
         <Locate className="h-4 w-4" aria-hidden />
       </button>
-      <button type="button" className={btn} aria-label="3D isometric view" onClick={() => sendCamera("iso")}>
+      <button
+        type="button"
+        className={btn}
+        aria-label="3D isometric view"
+        onClick={() => sendCamera("iso")}
+      >
         <Boxes className="h-4 w-4" aria-hidden />
       </button>
-      <button type="button" className={btn} aria-label="Top down view" onClick={() => sendCamera("top")}>
+      <button
+        type="button"
+        className={btn}
+        aria-label="Top down view"
+        onClick={() => sendCamera("top")}
+      >
         <Maximize2 className="h-4 w-4" aria-hidden />
       </button>
-      <button type="button" className={btn} aria-label="Fly through" onClick={() => sendCamera("fly")}>
+      <button
+        type="button"
+        className={btn}
+        aria-label="Fly through"
+        onClick={() => sendCamera("fly")}
+      >
         <Plane className="h-4 w-4" aria-hidden />
       </button>
       <button
@@ -91,14 +125,22 @@ export function IndoorBadge() {
         <Wifi className="h-3.5 w-3.5" aria-hidden /> Indoor positioning
       </p>
       <p className="text-muted-foreground">● WiFi signal · ● BLE beacon</p>
-      <p className="text-muted-foreground">Accuracy: {Math.max(1.8, user.accuracy / 2).toFixed(1)} m</p>
+      <p className="text-muted-foreground">
+        Accuracy: {Math.max(1.8, user.accuracy / 2).toFixed(1)} m
+      </p>
     </div>
   );
 }
 
 export function BuildingCard() {
-  const { selectedBuilding, setSelectedBuilding, crowdFor, selectBuilding, sendCamera, destination } =
-    useNavigator();
+  const {
+    selectedBuilding,
+    setSelectedBuilding,
+    crowdFor,
+    selectBuilding,
+    sendCamera,
+    destination,
+  } = useNavigator();
   const b = selectedBuilding ? buildingById(selectedBuilding) : null;
   if (!b || destination) return null;
   const crowd = crowdFor(b.id);

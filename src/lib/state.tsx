@@ -9,9 +9,12 @@ import {
   type ReactNode,
 } from "react";
 import { buildRoute, nearestNode, type RouteMode, type RouteResult } from "@/lib/routing/engine";
-import { crowdData, defaultFavorites, geoToLocal, localToGeo, nodeIndex } from "@/lib/campus/data";
+import { buildings, geoToLocal, localToGeo, nodeIndex } from "@/lib/campus/data";
+import { campusStore, useCampusStore } from "@/lib/campus/store";
 import { destinationById, destinationForBuilding, type Destination } from "@/lib/campus/search";
-import type { CrowdLevel } from "@/types/campus";
+import { formatDistance } from "@/lib/format";
+import type { UserProfileDoc } from "@/lib/firebase/schema";
+import type { ConstructionZone, CrowdLevel } from "@/types/campus";
 
 export type NavState =
   | "IDLE"
@@ -65,7 +68,23 @@ interface NavigatorContextValue {
   toggleFavorite: (id: string) => void;
   recents: string[];
   crowdFor: (buildingId: string) => { level: CrowdLevel; occupancy: number };
-  cameraCommand: { type: "focus" | "top" | "iso" | "gps" | "fly" | "zoom"; payload?: unknown; n: number } | null;
+  zones: ConstructionZone[];
+  profile: UserProfileDoc;
+  updateProfile: (patch: Partial<UserProfileDoc>) => void;
+  formatLength: (metres: number) => string;
+  startLocations: { id: string; name: string }[];
+  startLocationId: string;
+  setStartLocation: (buildingId: string) => void;
+  demoCaption: string | null;
+  demoStep: number;
+  demoTotal: number;
+  simulateDrift: boolean;
+  setSimulateDrift: (v: boolean) => void;
+  cameraCommand: {
+    type: "focus" | "top" | "iso" | "gps" | "fly" | "zoom";
+    payload?: unknown;
+    n: number;
+  } | null;
   sendCamera: (type: "focus" | "top" | "iso" | "gps" | "fly" | "zoom", payload?: unknown) => void;
   runDemoScenario: () => void;
   error: string | null;
@@ -74,6 +93,26 @@ interface NavigatorContextValue {
 const Ctx = createContext<NavigatorContextValue | null>(null);
 
 const START_NODE = "e_gate";
+
+const selectZones = (s: { zones: ConstructionZone[] }) => s.zones;
+const selectCrowd = (s: ReturnType<typeof campusStore.getState>) => s.crowd;
+const selectProfile = (s: ReturnType<typeof campusStore.getState>) => s.profile;
+const selectFavorites = (s: ReturnType<typeof campusStore.getState>) => s.favorites;
+const selectRecents = (s: ReturnType<typeof campusStore.getState>) => s.recents;
+
+/** predefined demo starting points offered by Demo Mode */
+export const START_LOCATIONS = ["gate", "parking", "hostel", "busstop", "canteen", "library"].map(
+  (id) => ({ id, name: buildings.find((b) => b.id === id)?.name ?? id }),
+);
+
+interface DemoBeat {
+  at: number;
+  caption: string;
+  run?: () => void;
+}
+
+/** number of beats in the guided hackathon demo */
+const DEMO_BEATS = 9;
 
 export function NavigatorProvider({ children }: { children: ReactNode }) {
   const startNode = nodeIndex.get(START_NODE)!;
@@ -97,13 +136,21 @@ export function NavigatorProvider({ children }: { children: ReactNode }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [activeFloor, setActiveFloor] = useState(0);
   const [showCrowd, setShowCrowd] = useState(false);
-  const [favorites, setFavorites] = useState<string[]>(defaultFavorites);
-  const [recents, setRecents] = useState<string[]>(["b:library", "ce-b204"]);
+  const favorites = useCampusStore(selectFavorites);
+  const recents = useCampusStore(selectRecents);
+  const crowd = useCampusStore(selectCrowd);
+  const zones = useCampusStore(selectZones);
+  const profile = useCampusStore(selectProfile);
+  const [startLocationId, setStartLocationId] = useState("gate");
+  const [simulateDrift, setSimulateDrift] = useState(true);
+  const [demoCaption, setDemoCaption] = useState<string | null>(null);
+  const [demoStep, setDemoStep] = useState(0);
+  const demoTimers = useRef<number[]>([]);
+  const sessionId = useRef<string | null>(null);
   const [hoveredBuilding, setHoveredBuilding] = useState<string | null>(null);
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
   const [cameraCommand, setCameraCommand] = useState<NavigatorContextValue["cameraCommand"]>(null);
   const [error, setError] = useState<string | null>(null);
-  const [crowd, setCrowd] = useState(crowdData);
   const cmdCount = useRef(0);
   const watchId = useRef<number | null>(null);
 
@@ -116,44 +163,42 @@ export function NavigatorProvider({ children }: { children: ReactNode }) {
   );
 
   /* ------------------------------------------------------------ favorites */
+  const toggleFavorite = useCallback((id: string) => campusStore.toggleFavorite(id), []);
+  const updateProfile = useCallback(
+    (patch: Partial<UserProfileDoc>) => campusStore.updateProfile(patch),
+    [],
+  );
+  const formatLength = useCallback(
+    (metres: number) => formatDistance(metres, profile.units),
+    [profile.units],
+  );
+
+  /* ---------------------------------------------------------- preferences */
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("c3d:favorites");
-      if (saved) setFavorites(JSON.parse(saved));
-    } catch {
-      /* ignore */
-    }
-  }, []);
-  const toggleFavorite = useCallback((id: string) => {
-    setFavorites((prev) => {
-      const next = prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id];
-      try {
-        localStorage.setItem("c3d:favorites", JSON.stringify(next));
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
-  }, []);
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    root.classList.toggle("light", profile.theme === "light");
+    root.classList.toggle("reduce-motion", profile.reducedMotion);
+    root.style.colorScheme = profile.theme === "light" ? "light" : "dark";
+  }, [profile.theme, profile.reducedMotion]);
+
+  /** apply the saved default route preference once on mount */
+  const appliedDefaultMode = useRef(false);
+  useEffect(() => {
+    if (appliedDefaultMode.current) return;
+    appliedDefaultMode.current = true;
+    setModeState(profile.accessibilityPreference ? "accessible" : profile.defaultRouteMode);
+  }, [profile.accessibilityPreference, profile.defaultRouteMode]);
 
   /* ------------------------------------------------------------- crowd sim */
   useEffect(() => {
-    const t = setInterval(() => {
-      setCrowd((prev) =>
-        prev.map((c) => {
-          const delta = Math.round((Math.random() - 0.45) * 9);
-          const occupancy = Math.max(5, Math.min(99, c.occupancy + delta));
-          const level: CrowdLevel = occupancy > 75 ? "high" : occupancy > 45 ? "moderate" : "low";
-          return { ...c, occupancy, level };
-        }),
-      );
-    }, 4000);
+    const t = setInterval(() => campusStore.tickCrowd(), 4000);
     return () => clearInterval(t);
   }, []);
 
   const crowdFor = useCallback(
     (buildingId: string) => {
-      const c = crowd.find((x) => x.id === buildingId);
+      const c = crowd.find((x: { id: string }) => x.id === buildingId);
       return { level: (c?.level ?? "low") as CrowdLevel, occupancy: c?.occupancy ?? 25 };
     },
     [crowd],
@@ -250,7 +295,7 @@ export function NavigatorProvider({ children }: { children: ReactNode }) {
         setNavState("IDLE");
         return;
       }
-      setRecents((r) => [d.id, ...r.filter((x) => x !== d.id)].slice(0, 6));
+      campusStore.pushRecent(d.id);
       setNavState("DESTINATION_SELECTED");
       computeRoutes(d, mode);
       sendCamera("focus", { x: d.buildingId, floor: d.floor });
@@ -302,7 +347,9 @@ export function NavigatorProvider({ children }: { children: ReactNode }) {
     const segLens: number[] = [];
     let total = 0;
     for (let i = 1; i < pts.length; i++) {
-      const d = Math.hypot(pts[i]!.x - pts[i - 1]!.x, pts[i]!.z - pts[i - 1]!.z) + Math.abs(pts[i]!.floor - pts[i - 1]!.floor) * 12;
+      const d =
+        Math.hypot(pts[i]!.x - pts[i - 1]!.x, pts[i]!.z - pts[i - 1]!.z) +
+        Math.abs(pts[i]!.floor - pts[i - 1]!.floor) * 12;
       segLens.push(d);
       total += d;
     }
@@ -333,21 +380,58 @@ export function NavigatorProvider({ children }: { children: ReactNode }) {
   }, [progress, route, navState]);
 
   const startNavigation = useCallback(() => {
-    if (!route) return;
+    if (!route || !destination) return;
     setProgress(0);
     setCurrentStep(0);
     setNavState("NAVIGATING");
     sendCamera("fly");
-  }, [route, sendCamera]);
+    const id = `ns_${Date.now()}`;
+    sessionId.current = id;
+    campusStore.startSession({
+      id,
+      userId: profile.id,
+      destinationId: destination.id,
+      destinationName: destination.name,
+      mode,
+      distance: route.distance,
+      minutes: route.minutes,
+      startedAt: Date.now(),
+    });
+  }, [destination, mode, profile.id, route, sendCamera]);
+
+  useEffect(() => {
+    if (navState === "ARRIVED" && sessionId.current) {
+      campusStore.completeSession(sessionId.current);
+      sessionId.current = null;
+    }
+  }, [navState]);
+
+  /** move the simulated user to a predefined start building entrance */
+  const setStartLocation = useCallback(
+    (buildingId: string) => {
+      const n = nodeIndex.get(`e_${buildingId}`);
+      if (!n) return;
+      setStartLocationId(buildingId);
+      setDemoMode(true);
+      setNavState((s) => (s === "NAVIGATING" ? "ROUTE_READY" : s));
+      setProgress(0);
+      setIndoorMode(false);
+      setActiveFloor(0);
+      setUser((u) => ({ ...u, x: n.x, z: n.z, floor: 0, accuracy: 4.2 }));
+      setGpsMessage(`Demo position — ${n.label ?? buildingId}`);
+      sendCamera("gps");
+    },
+    [sendCamera],
+  );
 
   const stopNavigation = useCallback(() => {
     setNavState(route ? "ROUTE_READY" : "IDLE");
     setProgress(0);
     setIndoorMode(false);
     setActiveFloor(0);
-    const s = nodeIndex.get(START_NODE)!;
+    const s = nodeIndex.get(`e_${startLocationId}`) ?? nodeIndex.get(START_NODE)!;
     setUser((u) => ({ ...u, x: s.x, z: s.z, floor: 0 }));
-  }, [route]);
+  }, [route, startLocationId]);
 
   const toggleDemoMode = useCallback(() => {
     setDemoMode((d) => {
@@ -358,26 +442,124 @@ export function NavigatorProvider({ children }: { children: ReactNode }) {
     });
   }, [requestGps]);
 
+  /* ------------------------------------------------- simulated GPS drift */
+  useEffect(() => {
+    if (!demoMode || !simulateDrift || navState === "NAVIGATING") return;
+    const t = setInterval(() => {
+      setUser((u) => ({
+        ...u,
+        x: u.x + (Math.random() - 0.5) * 1.6,
+        z: u.z + (Math.random() - 0.5) * 1.6,
+        accuracy: Math.round((3.5 + Math.random() * 3) * 10) / 10,
+      }));
+    }, 2200);
+    return () => clearInterval(t);
+  }, [demoMode, simulateDrift, navState]);
+
+  /* --------------------------------- keep route in sync with construction */
+  const zonesKey = zones.map((z) => `${z.id}:${z.status}`).join("|");
+  const skipFirstZoneSync = useRef(true);
+  useEffect(() => {
+    if (skipFirstZoneSync.current) {
+      skipFirstZoneSync.current = false;
+      return;
+    }
+    if (destination && navState !== "NAVIGATING") computeRoutes(destination, mode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zonesKey]);
+
+  /* --------------------------------------------- guided hackathon demo */
+  const clearDemo = useCallback(() => {
+    demoTimers.current.forEach((t) => clearTimeout(t));
+    demoTimers.current = [];
+  }, []);
+
+  useEffect(() => clearDemo, [clearDemo]);
+
   const runDemoScenario = useCallback(() => {
-    const s = nodeIndex.get(START_NODE)!;
-    setDemoMode(true);
-    setUser((u) => ({ ...u, x: s.x, z: s.z, floor: 0, accuracy: 4.2 }));
-    setGpsMessage("Demo campus position active");
-    setActiveFloor(0);
-    setShowCrowd(true);
-    setModeState("fastest");
+    clearDemo();
+    const s = nodeIndex.get(`e_${startLocationId}`) ?? nodeIndex.get(START_NODE)!;
     const dest = destinationById("ce-b204") ?? null;
-    setDestination(dest);
-    setSelectedBuilding("ce");
-    computeRoutes(dest, "fastest");
-    sendCamera("focus", { x: "ce" });
-    setTimeout(() => {
-      setProgress(0);
-      setCurrentStep(0);
-      setNavState("NAVIGATING");
-      sendCamera("fly");
-    }, 1600);
-  }, [computeRoutes, sendCamera]);
+    const beats: DemoBeat[] = [
+      {
+        at: 0,
+        caption: `Locating you at ${s.label ?? "the Main Gate"}…`,
+        run: () => {
+          setDemoMode(true);
+          setShowCrowd(false);
+          setModeState("fastest");
+          setDestination(null);
+          setRoute(null);
+          setIndoorMode(false);
+          setActiveFloor(0);
+          setProgress(0);
+          setNavState("LOCATING");
+          setUser((u) => ({ ...u, x: s.x, z: s.z, floor: 0, accuracy: 8.4 }));
+          sendCamera("gps");
+        },
+      },
+      {
+        at: 1800,
+        caption: "Position locked — accuracy 4.2 m. You are here.",
+        run: () => {
+          setNavState("IDLE");
+          setUser((u) => ({ ...u, accuracy: 4.2 }));
+        },
+      },
+      {
+        at: 4000,
+        caption: "Searching campus for “Lecture Hall B204”…",
+        run: () => {
+          setSelectedBuilding("ce");
+          sendCamera("focus", { x: "ce" });
+        },
+      },
+      {
+        at: 6200,
+        caption: "Calculating the fastest route around the active construction zone…",
+        run: () => {
+          setDestination(dest);
+          computeRoutes(dest, "fastest");
+        },
+      },
+      {
+        at: 9000,
+        caption: "Route ready — glowing 3D path drawn from your position to B204.",
+      },
+      {
+        at: 11500,
+        caption: "Navigating through the Computer Engineering Block…",
+        run: () => {
+          setProgress(0);
+          setCurrentStep(0);
+          setNavState("NAVIGATING");
+          sendCamera("fly");
+        },
+      },
+      { at: 18000, caption: "Taking the elevator — switching Ground Floor to Floor 2." },
+      {
+        at: 26000,
+        caption: "Live crowd density overlay enabled across the campus.",
+        run: () => setShowCrowd(true),
+      },
+      {
+        at: 33000,
+        caption: "Arrived at B204 — step-free alternative is also available.",
+      },
+    ];
+    beats.forEach((beat, i) => {
+      const timer = window.setTimeout(() => {
+        beat.run?.();
+        setDemoCaption(beat.caption);
+        setDemoStep(i + 1);
+      }, beat.at);
+      demoTimers.current.push(timer);
+    });
+    demoTimers.current.push(
+      window.setTimeout(() => setDemoCaption(null), beats[beats.length - 1]!.at + 8000),
+    );
+    return beats.length;
+  }, [clearDemo, computeRoutes, sendCamera, startLocationId]);
 
   const value = useMemo<NavigatorContextValue>(
     () => ({
@@ -412,6 +594,18 @@ export function NavigatorProvider({ children }: { children: ReactNode }) {
       toggleFavorite,
       recents,
       crowdFor,
+      zones,
+      profile,
+      updateProfile,
+      formatLength,
+      startLocations: START_LOCATIONS,
+      startLocationId,
+      setStartLocation,
+      demoCaption,
+      demoStep,
+      demoTotal: DEMO_BEATS,
+      simulateDrift,
+      setSimulateDrift,
       cameraCommand,
       sendCamera,
       runDemoScenario,
@@ -445,6 +639,15 @@ export function NavigatorProvider({ children }: { children: ReactNode }) {
       toggleFavorite,
       recents,
       crowdFor,
+      zones,
+      profile,
+      updateProfile,
+      formatLength,
+      startLocationId,
+      setStartLocation,
+      demoCaption,
+      demoStep,
+      simulateDrift,
       cameraCommand,
       sendCamera,
       runDemoScenario,
