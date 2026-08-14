@@ -10,33 +10,108 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as AppIndexRouteImport } from './routes/app/index'
+import { Route as AppArRouteImport } from './routes/app/ar'
+import { Route as AppFavoritesRouteImport } from './routes/app/favorites'
+import { Route as AppPlacesRouteImport } from './routes/app/places'
+import { Route as AppScheduleRouteImport } from './routes/app/schedule'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppArRoute = AppArRouteImport.update({
+  id: '/ar',
+  path: '/ar',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFavoritesRoute = AppFavoritesRouteImport.update({
+  id: '/favorites',
+  path: '/favorites',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPlacesRoute = AppPlacesRouteImport.update({
+  id: '/places',
+  path: '/places',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppScheduleRoute = AppScheduleRouteImport.update({
+  id: '/schedule',
+  path: '/schedule',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/ar': typeof AppArRoute
+  '/app/favorites': typeof AppFavoritesRoute
+  '/app/places': typeof AppPlacesRoute
+  '/app/schedule': typeof AppScheduleRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app/ar': typeof AppArRoute
+  '/app/favorites': typeof AppFavoritesRoute
+  '/app/places': typeof AppPlacesRoute
+  '/app/schedule': typeof AppScheduleRoute
+  '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/ar': typeof AppArRoute
+  '/app/favorites': typeof AppFavoritesRoute
+  '/app/places': typeof AppPlacesRoute
+  '/app/schedule': typeof AppScheduleRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/app/ar'
+    | '/app/favorites'
+    | '/app/places'
+    | '/app/schedule'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/app/ar'
+    | '/app/favorites'
+    | '/app/places'
+    | '/app/schedule'
+    | '/app'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/app/ar'
+    | '/app/favorites'
+    | '/app/places'
+    | '/app/schedule'
+    | '/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +123,72 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/ar': {
+      id: '/app/ar'
+      path: '/ar'
+      fullPath: '/app/ar'
+      preLoaderRoute: typeof AppArRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/favorites': {
+      id: '/app/favorites'
+      path: '/favorites'
+      fullPath: '/app/favorites'
+      preLoaderRoute: typeof AppFavoritesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/places': {
+      id: '/app/places'
+      path: '/places'
+      fullPath: '/app/places'
+      preLoaderRoute: typeof AppPlacesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/schedule': {
+      id: '/app/schedule'
+      path: '/schedule'
+      fullPath: '/app/schedule'
+      preLoaderRoute: typeof AppScheduleRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppArRoute: typeof AppArRoute
+  AppFavoritesRoute: typeof AppFavoritesRoute
+  AppPlacesRoute: typeof AppPlacesRoute
+  AppScheduleRoute: typeof AppScheduleRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppArRoute: AppArRoute,
+  AppFavoritesRoute: AppFavoritesRoute,
+  AppPlacesRoute: AppPlacesRoute,
+  AppScheduleRoute: AppScheduleRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
