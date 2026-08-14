@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AppIndexRouteImport } from './routes/app/index'
+import { Route as AppAdminRouteImport } from './routes/app/admin'
 import { Route as AppArRouteImport } from './routes/app/ar'
 import { Route as AppFavoritesRouteImport } from './routes/app/favorites'
 import { Route as AppPlacesRouteImport } from './routes/app/places'
@@ -30,6 +31,11 @@ const AppRoute = AppRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AppRoute,
 } as any)
 const AppArRoute = AppArRouteImport.update({
@@ -56,6 +62,7 @@ const AppScheduleRoute = AppScheduleRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/app/admin': typeof AppAdminRoute
   '/app/ar': typeof AppArRoute
   '/app/favorites': typeof AppFavoritesRoute
   '/app/places': typeof AppPlacesRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app/admin': typeof AppAdminRoute
   '/app/ar': typeof AppArRoute
   '/app/favorites': typeof AppFavoritesRoute
   '/app/places': typeof AppPlacesRoute
@@ -74,6 +82,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/app/admin': typeof AppAdminRoute
   '/app/ar': typeof AppArRoute
   '/app/favorites': typeof AppFavoritesRoute
   '/app/places': typeof AppPlacesRoute
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
+    | '/app/admin'
     | '/app/ar'
     | '/app/favorites'
     | '/app/places'
@@ -93,6 +103,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/app/admin'
     | '/app/ar'
     | '/app/favorites'
     | '/app/places'
@@ -102,6 +113,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
+    | '/app/admin'
     | '/app/ar'
     | '/app/favorites'
     | '/app/places'
@@ -137,6 +149,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/admin': {
+      id: '/app/admin'
+      path: '/admin'
+      fullPath: '/app/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/ar': {
       id: '/app/ar'
       path: '/ar'
@@ -169,6 +188,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppAdminRoute: typeof AppAdminRoute
   AppArRoute: typeof AppArRoute
   AppFavoritesRoute: typeof AppFavoritesRoute
   AppPlacesRoute: typeof AppPlacesRoute
@@ -177,6 +197,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAdminRoute: AppAdminRoute,
   AppArRoute: AppArRoute,
   AppFavoritesRoute: AppFavoritesRoute,
   AppPlacesRoute: AppPlacesRoute,
