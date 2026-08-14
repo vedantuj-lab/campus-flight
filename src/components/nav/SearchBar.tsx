@@ -6,7 +6,7 @@ import { nodeIndex } from "@/lib/campus/data";
 import { CategoryIcon, categoryLabel } from "@/components/nav/CategoryIcon";
 
 export function SearchBar() {
-  const { selectDestination, user } = useNavigator();
+  const { selectDestination, user, formatLength } = useNavigator();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -82,7 +82,7 @@ export function SearchBar() {
                   <span className="shrink-0 text-right text-[11px]">
                     {dist && (
                       <span className="block font-medium text-primary">
-                        {dist.m} m · {dist.min} min
+                        {formatLength(dist.m)} · {dist.min} min
                       </span>
                     )}
                     <span className="block text-muted-foreground">{categoryLabel(d.category)}</span>

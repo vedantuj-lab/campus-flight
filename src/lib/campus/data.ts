@@ -349,14 +349,16 @@ for (let i = -4; i <= 4; i++) {
   push("light", 22, i * 38);
 }
 // benches in the garden
-([
-  [-10, 62],
-  [14, 62],
-  [-10, -20],
-  [14, -20],
-  [-46, -140],
-  [-16, -140],
-] as [number, number][]).forEach(([x, z]) => push("bench", x, z));
+(
+  [
+    [-10, 62],
+    [14, 62],
+    [-10, -20],
+    [14, -20],
+    [-46, -140],
+    [-16, -140],
+  ] as [number, number][]
+).forEach(([x, z]) => push("bench", x, z));
 push("gate", 0, 168);
 push("monument", 4, 62);
 push("fountain", 4, -26);
@@ -603,6 +605,52 @@ for (const r of rooms) {
 export const nodes: CampusNode[] = Array.from(nodeMap.values());
 export const edges: CampusEdge[] = edgeList;
 export const nodeIndex = nodeMap;
+
+/**
+ * Recomputes the `construction` flag on every outdoor edge from the given
+ * zones. Called whenever an admin adds, clears or removes a zone so routing
+ * reacts immediately.
+ */
+export function applyConstructionZones(zones: ConstructionZone[]) {
+  const blocked = (x: number, z: number) =>
+    zones.some((c) => c.status === "active" && Math.hypot(c.x - x, c.z - z) < c.radius);
+  for (const edge of edgeList) {
+    const a = nodeMap.get(edge.from);
+    const b = nodeMap.get(edge.to);
+    if (!a || !b) continue;
+    if (a.kind === "elevator" || b.kind === "elevator" || a.floor > 0 || b.floor > 0) continue;
+    edge.construction = blocked(a.x, a.z) || blocked(b.x, b.z);
+  }
+}
+
+/* --------------------------------------------------------- campus events */
+
+export const campusEvents = [
+  {
+    id: "ev-1",
+    title: "TechNova Hackathon Finals",
+    buildingId: "audi",
+    startsAt: "09:00 AM",
+    endsAt: "06:00 PM",
+    audience: "All students",
+  },
+  {
+    id: "ev-2",
+    title: "Placement Drive — Cloud Systems",
+    buildingId: "admin",
+    startsAt: "10:30 AM",
+    endsAt: "02:00 PM",
+    audience: "Final year",
+  },
+  {
+    id: "ev-3",
+    title: "Robotics Open Lab",
+    buildingId: "workshop",
+    startsAt: "03:00 PM",
+    endsAt: "07:00 PM",
+    audience: "Open campus",
+  },
+];
 
 /* --------------------------------------------------------- crowd data */
 

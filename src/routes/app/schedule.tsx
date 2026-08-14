@@ -8,7 +8,10 @@ export const Route = createFileRoute("/app/schedule")({
   head: () => ({
     meta: [
       { title: "Today's Schedule — Campus3D Navigator" },
-      { name: "description", content: "See today's classes and navigate straight to the next lecture hall or lab." },
+      {
+        name: "description",
+        content: "See today's classes and navigate straight to the next lecture hall or lab.",
+      },
       { property: "og:title", content: "Today's Schedule — Campus3D Navigator" },
       { property: "og:description", content: "Navigate to your next class in one tap." },
     ],

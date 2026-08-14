@@ -11,9 +11,15 @@ export const Route = createFileRoute("/app/places")({
   head: () => ({
     meta: [
       { title: "Campus Places — Campus3D Navigator" },
-      { name: "description", content: "Browse academic, food, emergency, sports and transport places across campus." },
+      {
+        name: "description",
+        content: "Browse academic, food, emergency, sports and transport places across campus.",
+      },
       { property: "og:title", content: "Campus Places — Campus3D Navigator" },
-      { property: "og:description", content: "Every campus place with hours, crowd level and accessibility." },
+      {
+        property: "og:description",
+        content: "Every campus place with hours, crowd level and accessibility.",
+      },
     ],
   }),
   component: PlacesPage,
@@ -36,7 +42,9 @@ function PlacesPage() {
             type="button"
             onClick={() => setCat(c)}
             className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
-              cat === c ? "border-primary/60 bg-primary/15 text-primary" : "border-border text-muted-foreground hover:text-foreground"
+              cat === c
+                ? "border-primary/60 bg-primary/15 text-primary"
+                : "border-border text-muted-foreground hover:text-foreground"
             }`}
           >
             {c === "all" ? "All" : categoryLabel(c as never)}

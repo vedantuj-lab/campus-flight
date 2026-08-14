@@ -2,9 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, OrbitControls, Environment } from "@react-three/drei";
 import * as THREE from "three";
-import { buildings, constructionZones, landmarks, nodeIndex, rooms } from "@/lib/campus/data";
+import { buildings, landmarks, nodeIndex, rooms } from "@/lib/campus/data";
 import { useNavigator } from "@/lib/state";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { Building } from "@/types/campus";
+
+type OrbitControlsRef = OrbitControlsImpl | null;
 
 const FLOOR_HEIGHT = 9;
 
@@ -33,11 +36,64 @@ function Ground() {
       {roads.map((r, i) => (
         <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[r.x, 0.06, r.z]} receiveShadow>
           <planeGeometry args={[r.w, r.d]} />
-          <meshStandardMaterial color="#16243d" roughness={0.8} emissive="#0e7490" emissiveIntensity={0.06} />
+          <meshStandardMaterial
+            color="#16243d"
+            roughness={0.8}
+            emissive="#0e7490"
+            emissiveIntensity={0.06}
+          />
         </mesh>
       ))}
+      {/* lawn / garden */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[4, 0.07, 40]} receiveShadow>
+        <circleGeometry args={[46, 48]} />
+        <meshStandardMaterial
+          color="#12341f"
+          roughness={1}
+          emissive="#0f5132"
+          emissiveIntensity={0.12}
+        />
+      </mesh>
+      {/* sports field turf */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[108, 0.07, -132]} receiveShadow>
+        <planeGeometry args={[104, 70]} />
+        <meshStandardMaterial
+          color="#14402a"
+          roughness={1}
+          emissive="#0f5132"
+          emissiveIntensity={0.1}
+        />
+      </mesh>
+      <ParkingStalls />
       <gridHelper args={[400, 40, "#1e3a5f", "#152238"]} position={[0, 0.08, 0]} />
     </group>
+  );
+}
+
+/** painted bays on the north parking deck apron */
+function ParkingStalls() {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const stalls = useMemo(() => {
+    const out: [number, number][] = [];
+    for (let row = 0; row < 2; row++)
+      for (let i = 0; i < 12; i++) out.push([-164 + i * 6, 158 + row * 14]);
+    return out;
+  }, []);
+  useEffect(() => {
+    const m = new THREE.Object3D();
+    stalls.forEach(([x, z], i) => {
+      m.position.set(x, 0.09, z);
+      m.rotation.set(-Math.PI / 2, 0, 0);
+      m.updateMatrix();
+      ref.current?.setMatrixAt(i, m.matrix);
+    });
+    if (ref.current) ref.current.instanceMatrix.needsUpdate = true;
+  }, [stalls]);
+  return (
+    <instancedMesh ref={ref} args={[undefined, undefined, stalls.length]}>
+      <planeGeometry args={[0.6, 10]} />
+      <meshBasicMaterial color="#38507a" transparent opacity={0.65} />
+    </instancedMesh>
   );
 }
 
@@ -116,6 +172,19 @@ function BuildingMesh({ b }: { b: Building }) {
           emissiveIntensity={selected ? 0.55 : hovered ? 0.4 : 0.12}
         />
       </mesh>
+      {/* lit floor bands read as windows from a distance */}
+      {appeared &&
+        Array.from({ length: b.floors }, (_, f) => (
+          <mesh key={f} position={[0, (f + 0.62) * (b.height / b.floors), 0]}>
+            <boxGeometry args={[b.width + 0.4, 0.9, b.depth + 0.4]} />
+            <meshBasicMaterial
+              color={color}
+              transparent
+              opacity={dimmed ? 0.12 : activeFloor === f ? 0.95 : 0.35}
+              toneMapped={false}
+            />
+          </mesh>
+        ))}
       {/* neon roof edge */}
       <mesh position={[0, b.height + 0.4, 0]}>
         <boxGeometry args={[b.width + 1.2, 0.5, b.depth + 1.2]} />
@@ -153,7 +222,10 @@ function FloorRooms() {
           const n = nodeIndex.get(`r_${r.id}`);
           return n ? { r, n } : null;
         })
-        .filter(Boolean) as { r: (typeof rooms)[number]; n: NonNullable<ReturnType<typeof nodeIndex.get>> }[],
+        .filter(Boolean) as {
+        r: (typeof rooms)[number];
+        n: NonNullable<ReturnType<typeof nodeIndex.get>>;
+      }[],
     [activeFloor],
   );
   if (activeFloor === 0) return null;
@@ -276,7 +348,8 @@ function Landmarks() {
 /* ------------------------------------------------------- construction */
 
 function ConstructionZones() {
-  const active = constructionZones.filter((c) => c.status !== "cleared");
+  const { zones } = useNavigator();
+  const active = zones.filter((c) => c.status !== "cleared");
   const ref = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
     if (!ref.current) return;
@@ -374,9 +447,7 @@ function RoutePath() {
 
   const curve = useMemo(() => {
     if (!route || route.nodes.length < 2) return null;
-    const pts = route.nodes.map(
-      (n) => new THREE.Vector3(n.x, n.floor * FLOOR_HEIGHT + 1.6, n.z),
-    );
+    const pts = route.nodes.map((n) => new THREE.Vector3(n.x, n.floor * FLOOR_HEIGHT + 1.6, n.z));
     return new THREE.CatmullRomCurve3(pts, false, "catmullrom", 0.25);
   }, [route]);
 
@@ -443,7 +514,7 @@ function RoutePath() {
 
 /* ------------------------------------------------------ camera director */
 
-function CameraDirector({ controls }: { controls: React.RefObject<any> }) {
+function CameraDirector({ controls }: { controls: React.RefObject<OrbitControlsRef> }) {
   const { cameraCommand, user, navState } = useNavigator();
   const { camera } = useThree();
   const target = useRef(new THREE.Vector3(0, 0, 0));
@@ -477,7 +548,10 @@ function CameraDirector({ controls }: { controls: React.RefObject<any> }) {
       follow.current = true;
     } else if (c.type === "zoom") {
       const dir = (c.payload as number) ?? 1;
-      const v = camera.position.clone().sub(target.current).multiplyScalar(dir > 0 ? 0.75 : 1.3);
+      const v = camera.position
+        .clone()
+        .sub(target.current)
+        .multiplyScalar(dir > 0 ? 0.75 : 1.3);
       camTarget.current.copy(target.current.clone().add(v));
     }
   }, [cameraCommand, camera, user.x, user.z]);
@@ -504,7 +578,7 @@ function CameraDirector({ controls }: { controls: React.RefObject<any> }) {
 /* ------------------------------------------------------------- wrapper */
 
 export default function CampusScene() {
-  const controls = useRef<any>(null);
+  const controls = useRef<OrbitControlsRef>(null);
   return (
     <Canvas
       shadows

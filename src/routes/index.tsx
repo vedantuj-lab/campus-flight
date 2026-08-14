@@ -35,10 +35,37 @@ export const Route = createFileRoute("/")({
 const features = [
   { icon: Satellite, title: "Live GPS", copy: "Watch-position tracking with indoor fallback." },
   { icon: Boxes, title: "3D Navigation", copy: "A real WebGL digital twin of the campus." },
-  { icon: Layers, title: "Multi-Floor Routing", copy: "Elevators, stairwells and floor transitions." },
-  { icon: Accessibility, title: "Accessible Paths", copy: "Step-free routing with elevator preference." },
+  {
+    icon: Layers,
+    title: "Multi-Floor Routing",
+    copy: "Elevators, stairwells and floor transitions.",
+  },
+  {
+    icon: Accessibility,
+    title: "Accessible Paths",
+    copy: "Step-free routing with elevator preference.",
+  },
   { icon: Users, title: "Crowd Intelligence", copy: "Live occupancy overlays on every block." },
   { icon: ScanEye, title: "AR Navigation", copy: "Camera overlay with arrows and landmarks." },
+];
+
+const stats = [
+  { label: "Buildings", value: "13" },
+  { label: "Rooms & labs", value: "36" },
+  { label: "Nav nodes", value: "90+" },
+  { label: "Route modes", value: "4" },
+];
+
+const demoFlow = [
+  "Locate the student at Main Gate with a pulsing 3D marker.",
+  "Search “B204” with fuzzy campus search.",
+  "Calculate the fastest route with live ETA.",
+  "Draw the glowing animated 3D path across campus.",
+  "Walk Block B, take the elevator, switch Ground → Floor 2.",
+  "Avoid the active construction zone automatically.",
+  "Arrive at B204 with the accessible alternative shown.",
+  "Toggle the live crowd density overlay.",
+  "Open AR mode and ask Campus AI for the next class.",
 ];
 
 function Landing() {
@@ -98,7 +125,20 @@ function Landing() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-5 pb-20">
+        <section className="mx-auto max-w-7xl px-5 pb-10">
+          <dl className="glass grid grid-cols-2 gap-4 rounded-3xl p-5 sm:grid-cols-4">
+            {stats.map((s) => (
+              <div key={s.label} className="text-center">
+                <dt className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  {s.label}
+                </dt>
+                <dd className="text-gradient text-2xl font-semibold">{s.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-5 pb-14">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f, i) => (
               <article
@@ -111,6 +151,33 @@ function Landing() {
                 <p className="mt-1 text-xs text-muted-foreground">{f.copy}</p>
               </article>
             ))}
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-5 pb-20">
+          <div className="glass rounded-3xl p-6">
+            <h2 className="text-lg font-semibold">The two-minute judge demo</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Main Gate → Lecture Hall B204, narrated end to end from the map screen.
+            </p>
+            <ol className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {demoFlow.map((step, i) => (
+                <li
+                  key={step}
+                  className="flex items-start gap-3 rounded-2xl border border-border bg-secondary/30 p-3 text-xs"
+                >
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[image:var(--gradient-accent)] text-[10px] font-semibold text-primary-foreground">
+                    {i + 1}
+                  </span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+            <Link to="/app" className="mt-5 inline-block">
+              <Button className="gap-2">
+                <Navigation className="h-4 w-4" aria-hidden /> Run the demo
+              </Button>
+            </Link>
           </div>
         </section>
       </main>

@@ -8,9 +8,15 @@ export const Route = createFileRoute("/app/favorites")({
   head: () => ({
     meta: [
       { title: "Favorites — Campus3D Navigator" },
-      { name: "description", content: "Your saved campus destinations, one tap from a live 3D route." },
+      {
+        name: "description",
+        content: "Your saved campus destinations, one tap from a live 3D route.",
+      },
       { property: "og:title", content: "Favorites — Campus3D Navigator" },
-      { property: "og:description", content: "Frequent destinations saved for instant navigation." },
+      {
+        property: "og:description",
+        content: "Frequent destinations saved for instant navigation.",
+      },
     ],
   }),
   component: FavoritesPage,
@@ -25,7 +31,10 @@ function FavoritesPage() {
     if (!d) return null;
     return (
       <article key={id} className="glass flex items-center gap-3 rounded-2xl p-4">
-        <Star className={`h-4 w-4 ${fav ? "fill-warning text-warning" : "text-muted-foreground"}`} aria-hidden />
+        <Star
+          className={`h-4 w-4 ${fav ? "fill-warning text-warning" : "text-muted-foreground"}`}
+          aria-hidden
+        />
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-sm font-medium">{d.name}</h3>
           <p className="truncate text-[11px] text-muted-foreground">{d.subtitle}</p>

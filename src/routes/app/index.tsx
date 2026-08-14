@@ -1,10 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { CampusCanvas } from "@/components/campus/CampusCanvas";
-import { BuildingCard, FloorSelector, IndoorBadge, MapControls } from "@/components/campus/MapOverlays";
+import {
+  BuildingCard,
+  FloorSelector,
+  IndoorBadge,
+  MapControls,
+} from "@/components/campus/MapOverlays";
+import { DemoCaption, DemoPanel } from "@/components/demo/DemoPanel";
+import { MobileRouteSheet } from "@/components/nav/MobileRouteSheet";
 import { NavigationCard } from "@/components/nav/NavigationCard";
 import { RoutePanel } from "@/components/nav/RoutePanel";
-import { Button } from "@/components/ui/button";
 import { useNavigator } from "@/lib/state";
 
 export const Route = createFileRoute("/app/")({
@@ -24,7 +30,7 @@ export const Route = createFileRoute("/app/")({
 });
 
 function ExplorePage() {
-  const { requestGps, runDemoScenario } = useNavigator();
+  const { requestGps } = useNavigator();
   useEffect(() => {
     requestGps();
   }, [requestGps]);
@@ -38,13 +44,9 @@ function ExplorePage() {
         <IndoorBadge />
         <BuildingCard />
         <NavigationCard />
-        <Button
-          className="absolute bottom-4 right-4 z-10 gap-2"
-          variant="secondary"
-          onClick={runDemoScenario}
-        >
-          🎮 Run hackathon demo
-        </Button>
+        <MobileRouteSheet />
+        <DemoCaption />
+        <DemoPanel />
       </section>
       <aside className="glass hidden w-[22rem] shrink-0 overflow-y-auto rounded-none border-y-0 border-r-0 xl:block">
         <RoutePanel />
