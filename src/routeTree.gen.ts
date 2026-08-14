@@ -16,6 +16,7 @@ import { Route as AppAdminRouteImport } from './routes/app/admin'
 import { Route as AppArRouteImport } from './routes/app/ar'
 import { Route as AppFavoritesRouteImport } from './routes/app/favorites'
 import { Route as AppPlacesRouteImport } from './routes/app/places'
+import { Route as AppProfileRouteImport } from './routes/app/profile'
 import { Route as AppScheduleRouteImport } from './routes/app/schedule'
 
 const IndexRoute = IndexRouteImport.update({
@@ -53,6 +54,11 @@ const AppPlacesRoute = AppPlacesRouteImport.update({
   path: '/places',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppScheduleRoute = AppScheduleRouteImport.update({
   id: '/schedule',
   path: '/schedule',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/app/ar': typeof AppArRoute
   '/app/favorites': typeof AppFavoritesRoute
   '/app/places': typeof AppPlacesRoute
+  '/app/profile': typeof AppProfileRoute
   '/app/schedule': typeof AppScheduleRoute
   '/app/': typeof AppIndexRoute
 }
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/app/ar': typeof AppArRoute
   '/app/favorites': typeof AppFavoritesRoute
   '/app/places': typeof AppPlacesRoute
+  '/app/profile': typeof AppProfileRoute
   '/app/schedule': typeof AppScheduleRoute
   '/app': typeof AppIndexRoute
 }
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/app/ar': typeof AppArRoute
   '/app/favorites': typeof AppFavoritesRoute
   '/app/places': typeof AppPlacesRoute
+  '/app/profile': typeof AppProfileRoute
   '/app/schedule': typeof AppScheduleRoute
   '/app/': typeof AppIndexRoute
 }
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/app/ar'
     | '/app/favorites'
     | '/app/places'
+    | '/app/profile'
     | '/app/schedule'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/app/ar'
     | '/app/favorites'
     | '/app/places'
+    | '/app/profile'
     | '/app/schedule'
     | '/app'
   id:
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/app/ar'
     | '/app/favorites'
     | '/app/places'
+    | '/app/profile'
     | '/app/schedule'
     | '/app/'
   fileRoutesById: FileRoutesById
@@ -177,6 +189,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPlacesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/profile': {
+      id: '/app/profile'
+      path: '/profile'
+      fullPath: '/app/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/schedule': {
       id: '/app/schedule'
       path: '/schedule'
@@ -192,6 +211,7 @@ interface AppRouteChildren {
   AppArRoute: typeof AppArRoute
   AppFavoritesRoute: typeof AppFavoritesRoute
   AppPlacesRoute: typeof AppPlacesRoute
+  AppProfileRoute: typeof AppProfileRoute
   AppScheduleRoute: typeof AppScheduleRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -201,6 +221,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppArRoute: AppArRoute,
   AppFavoritesRoute: AppFavoritesRoute,
   AppPlacesRoute: AppPlacesRoute,
+  AppProfileRoute: AppProfileRoute,
   AppScheduleRoute: AppScheduleRoute,
   AppIndexRoute: AppIndexRoute,
 }
